@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  nginx:
+    build: ./nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - backend1
+      - backend2
+      - backend3
+    networks:
+      - app-network
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+    restart: unless-stopped
+
+  backend1:
+    build: ./backend
+    environment:
+      - SERVER_ID=Backend-1
+      - PORT=3000
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend2:
+    build: ./backend
+    environment:
+      - SERVER_ID=Backend-2
+      - PORT=3000
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend3:
+    build: ./backend
+    environment:
+      - SERVER_ID=Backend-3
+      - PORT=3000
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge

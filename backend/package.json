@@ -1,0 +1,12 @@
+{
+  "name": "nginx-devops-backend",
+  "version": "1.0.0",
+  "description": "Backend para demonstração DevOps com Nginx",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}

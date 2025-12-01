@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevOps com Nginx - Simulador</title>
+    <style>
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .info-box {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        
+        .info-box h3 {
+            color: #1976d2;
+            margin-bottom: 5px;
+        }
+        
+        .info-box p {
+            color: #555;
+            font-size: 0.9em;
+        }
+        
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin: 10px 5px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        .response-box {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            min-height: 150px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 14px;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        .stat-card:hover {
+            transform: scale(1.05);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .algorithm-selector {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 10px;
+        }
+        
+        .algorithm-selector label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .algorithm-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 DevOps com Nginx</h1>
+        <p class="subtitle">Simulador de Load Balancing e Reverse Proxy</p>
+        
+        <div class="info-box">
+            <h3>ℹ️ Como funciona</h3>
+            <p>Esta interface simula o comportamento de um Nginx fazendo load balancing entre 3 servidores backend. Cada requisição é distribuída usando o algoritmo selecionado.</p>
+        </div>
+        
+        <div class="algorithm-selector">
+            <label for="algorithm">🔧 Algoritmo de Load Balancing:</label>
+            <select id="algorithm" onchange="changeAlgorithm()">
+                <option value="round-robin">Round Robin (Alternado)</option>
+                <option value="least-conn">Least Connections (Menos Conexões)</option>
+                <option value="random">Random (Aleatório)</option>
+                <option value="ip-hash">IP Hash (Baseado em IP)</option>
+            </select>
+        </div>
+        
+        <div>
+            <button onclick="makeRequest()">📡 Fazer Requisição</button>
+            <button onclick="makeMultipleRequests(10)">🔄 10 Requisições</button>
+            <button onclick="makeMultipleRequests(50)">🔥 50 Requisições</button>
+            <button onclick="clearResponse()">🗑️ Limpar</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalRequests">0</div>
+                <div class="stat-label">Total de Requisições</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="backend1Count">0</div>
+                <div class="stat-label">Backend 1</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="backend2Count">0</div>
+                <div class="stat-label">Backend 2</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="backend3Count">0</div>
+                <div class="stat-label">Backend 3</div>
+            </div>
+        </div>
+
+        <div class="response-box" id="responseBox">
+Clique em "Fazer Requisição" para simular o load balancing do Nginx!
+
+📌 Algoritmos disponíveis:
+• Round Robin: Distribui requisições de forma circular
+• Least Connections: Envia para o servidor com menos conexões ativas
+• Random: Distribui aleatoriamente
+• IP Hash: Sempre envia o mesmo IP para o mesmo servidor
+        </div>
+    </div>
+
+    <script>
+        let stats = { total: 0, backend1: 0, backend2: 0, backend3: 0 };
+        let currentBackend = 0;
+        let algorithm = 'round-robin';
+        let connections = { backend1: 0, backend2: 0, backend3: 0 };
+        let requestHistory = [];
+
+        // Simula latências diferentes dos backends
+        const backendLatency = {
+            'Backend-1': () => 50 + Math.random() * 50,
+            'Backend-2': () => 60 + Math.random() * 60,
+            'Backend-3': () => 40 + Math.random() * 40
+        };
+
+        function changeAlgorithm() {
+            algorithm = document.getElementById('algorithm').value;
+            document.getElementById('responseBox').textContent = 
+                `✅ Algoritmo alterado para: ${algorithm}\n\nFaça novas requisições para ver o novo comportamento!`;
+        }
+
+        function selectBackend() {
+            let selected;
+            
+            switch(algorithm) {
+                case 'round-robin':
+                    currentBackend = (currentBackend % 3) + 1;
+                    selected = `Backend-${currentBackend}`;
+                    break;
+                    
+                case 'least-conn':
+                    const minConn = Math.min(connections.backend1, connections.backend2, connections.backend3);
+                    if (connections.backend1 === minConn) selected = 'Backend-1';
+                    else if (connections.backend2 === minConn) selected = 'Backend-2';
+                    else selected = 'Backend-3';
+                    break;
+                    
+                case 'random':
+                    const rand = Math.floor(Math.random() * 3) + 1;
+                    selected = `Backend-${rand}`;
+                    break;
+                    
+                case 'ip-hash':
+                    // Simula hash baseado em IP (sempre vai pro mesmo)
+                    const hash = '192.168.1.100'.split('.').reduce((a, b) => parseInt(a) + parseInt(b), 0);
+                    selected = `Backend-${(hash % 3) + 1}`;
+                    break;
+                    
+                default:
+                    selected = 'Backend-1';
+            }
+            
+            return selected;
+        }
+
+        async function makeRequest() {
+            const loading = document.getElementById('loading');
+            const responseBox = document.getElementById('responseBox');
+            
+            loading.style.display = 'block';
+            
+            try {
+                const server = selectBackend();
+                const latency = Math.round(backendLatency[server]());
+                
+                // Incrementa conexão
+                if (server === 'Backend-1') connections.backend1++;
+                else if (server === 'Backend-2') connections.backend2++;
+                else if (server === 'Backend-3') connections.backend3++;
+                
+                // Simula latência da requisição
+                await new Promise(resolve => setTimeout(resolve, latency));
+                
+                // Simula resposta do backend
+                const data = {
+                    server: server,
+                    timestamp: new Date().toISOString(),
+                    requestNumber: stats.total + 1,
+                    message: 'DevOps com Nginx - Load Balanced!',
+                    uptime: Math.floor(Math.random() * 10000),
+                    latency: `${latency}ms`,
+                    algorithm: algorithm,
+                    activeConnections: server === 'Backend-1' ? connections.backend1 :
+                                      server === 'Backend-2' ? connections.backend2 :
+                                      connections.backend3
+                };
+                
+                stats.total++;
+                if (data.server === 'Backend-1') stats.backend1++;
+                else if (data.server === 'Backend-2') stats.backend2++;
+                else if (data.server === 'Backend-3') stats.backend3++;
+                
+                requestHistory.push(data);
+                if (requestHistory.length > 5) requestHistory.shift();
+                
+                updateStats();
+                
+                // Decrementa conexão após um tempo
+                setTimeout(() => {
+                    if (server === 'Backend-1') connections.backend1 = Math.max(0, connections.backend1 - 1);
+                    else if (server === 'Backend-2') connections.backend2 = Math.max(0, connections.backend2 - 1);
+                    else if (server === 'Backend-3') connections.backend3 = Math.max(0, connections.backend3 - 1);
+                }, 1000);
+                
+                // Mostra últimas 5 requisições
+                let output = '📊 Últimas Requisições:\n\n';
+                requestHistory.reverse().forEach((req, idx) => {
+                    output += `${requestHistory.length - idx}. ${req.server} - ${req.latency}\n`;
+                    output += `   Timestamp: ${new Date(req.timestamp).toLocaleTimeString()}\n`;
+                    output += `   Conexões Ativas: ${req.activeConnections}\n\n`;
+                });
+                requestHistory.reverse();
+                
+                output += '\n💡 Última Resposta Completa:\n\n';
+                output += JSON.stringify(data, null, 2);
+                
+                responseBox.textContent = output;
+                
+            } catch (error) {
+                responseBox.textContent = 'Erro: ' + error.message;
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        async function makeMultipleRequests(count) {
+            const loading = document.getElementById('loading');
+            loading.style.display = 'block';
+            
+            for (let i = 0; i < count; i++) {
+                await makeRequest();
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            loading.style.display = 'none';
+            
+            document.getElementById('responseBox').textContent = 
+                `✅ ${count} requisições completadas!\n\n` +
+                `📊 Distribuição:\n` +
+                `Backend 1: ${stats.backend1} requisições (${((stats.backend1/stats.total)*100).toFixed(1)}%)\n` +
+                `Backend 2: ${stats.backend2} requisições (${((stats.backend2/stats.total)*100).toFixed(1)}%)\n` +
+                `Backend 3: ${stats.backend3} requisições (${((stats.backend3/stats.total)*100).toFixed(1)}%)\n\n` +
+                `Algoritmo utilizado: ${algorithm}`;
+        }
+
+        function updateStats() {
+            document.getElementById('totalRequests').textContent = stats.total;
+            document.getElementById('backend1Count').textContent = stats.backend1;
+            document.getElementById('backend2Count').textContent = stats.backend2;
+            document.getElementById('backend3Count').textContent = stats.backend3;
+        }
+
+        function clearResponse() {
+            document.getElementById('responseBox').textContent = 
+                '🗑️ Estatísticas limpas! Pronto para novos testes.\n\n' +
+                'Faça novas requisições para testar o load balancing!';
+            stats = { total: 0, backend1: 0, backend2: 0, backend3: 0 };
+            connections = { backend1: 0, backend2: 0, backend3: 0 };
+            requestHistory = [];
+            currentBackend = 0;
+            updateStats();
+        }
+    </script>
+</body>
+</html>
