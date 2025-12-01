@@ -3,7 +3,7 @@ version: '3.8'
 services:
   nginx:
     build: ./nginx
-    image: SEU_USUARIO_DOCKERHUB/nginx-devops:latest  # ← Adicione esta linha
+    image: danielarruda123/nginx-devops:latest  # ← Adicione esta linha
     ports:
       - "80:80"
       - "443:443"
@@ -19,7 +19,7 @@ services:
 
   backend1:
     build: ./backend
-    image: SEU_USUARIO_DOCKERHUB/backend-devops:latest  # ← Adicione esta linha
+    image: danielarruda123/backend-devops:latest  # ← Adicione esta linha
     environment:
       - SERVER_ID=Backend-1
       - PORT=3000
@@ -29,7 +29,7 @@ services:
 
   backend2:
     build: ./backend
-    image: SEU_USUARIO_DOCKERHUB/backend-devops:latest
+    image: danielarruda123/backend-devops:latest
     environment:
       - SERVER_ID=Backend-2
       - PORT=3000
@@ -39,7 +39,7 @@ services:
 
   backend3:
     build: ./backend
-    image: SEU_USUARIO_DOCKERHUB/backend-devops:latest
+    image: danielarruda123/backend-devops:latest
     environment:
       - SERVER_ID=Backend-3
       - PORT=3000
