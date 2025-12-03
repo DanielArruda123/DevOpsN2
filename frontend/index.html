@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevOps com Nginx - Simulador</title>
+    <title>DevOps Demo - Nginx Load Balancer</title>
     <style>
         * { 
             margin: 0; 
@@ -80,9 +80,14 @@
         button:active {
             transform: translateY(0);
         }
+
+        button.clear-btn {
+            background: #dc3545;
+        }
         
         .response-box {
-            background: #f5f5f5;
+            background: #2d2d2d;
+            color: #00ff00;
             padding: 20px;
             border-radius: 10px;
             margin-top: 20px;
@@ -91,6 +96,7 @@
             white-space: pre-wrap;
             word-wrap: break-word;
             font-size: 14px;
+            border: 1px solid #444;
         }
         
         .stats {
@@ -144,65 +150,36 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        .algorithm-selector {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 10px;
-        }
-        
-        .algorithm-selector label {
-            display: block;
-            margin-bottom: 10px;
-            font-weight: bold;
-            color: #333;
-        }
-        
-        .algorithm-selector select {
-            width: 100%;
-            padding: 10px;
-            border: 2px solid #667eea;
-            border-radius: 5px;
-            font-size: 14px;
-        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>🚀 DevOps com Nginx</h1>
-        <p class="subtitle">Simulador de Load Balancing e Reverse Proxy</p>
+        <h1>🚀 DevOps Real: Nginx & Docker</h1>
+        <p class="subtitle">Interagindo com Backend Cluster via Reverse Proxy</p>
         
         <div class="info-box">
-            <h3>ℹ️ Como funciona</h3>
-            <p>Esta interface simula o comportamento de um Nginx fazendo load balancing entre 3 servidores backend. Cada requisição é distribuída usando o algoritmo selecionado.</p>
-        </div>
-        
-        <div class="algorithm-selector">
-            <label for="algorithm">🔧 Algoritmo de Load Balancing:</label>
-            <select id="algorithm" onchange="changeAlgorithm()">
-                <option value="round-robin">Round Robin (Alternado)</option>
-                <option value="least-conn">Least Connections (Menos Conexões)</option>
-                <option value="random">Random (Aleatório)</option>
-                <option value="ip-hash">IP Hash (Baseado em IP)</option>
-            </select>
+            <h3>ℹ️ Arquitetura Ativa</h3>
+            <p>
+                Ao clicar no botão, o Frontend chama <strong>/api/</strong>. 
+                O Nginx intercepta e distribui a carga para um dos 3 containers Node.js usando o algoritmo <em>Least Connections</em>.
+            </p>
         </div>
         
         <div>
-            <button onclick="makeRequest()">📡 Fazer Requisição</button>
-            <button onclick="makeMultipleRequests(10)">🔄 10 Requisições</button>
-            <button onclick="makeMultipleRequests(50)">🔥 50 Requisições</button>
-            <button onclick="clearResponse()">🗑️ Limpar</button>
+            <button onclick="makeRequest()">📡 Requisitar API</button>
+            <button onclick="makeMultipleRequests(10)">🔄 10 Requisições Rápido</button>
+            <button class="clear-btn" onclick="clearStats()">🗑️ Resetar Stats</button>
         </div>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">Aguardando Nginx distribuir...</p>
         </div>
 
         <div class="stats">
             <div class="stat-card">
                 <div class="stat-number" id="totalRequests">0</div>
-                <div class="stat-label">Total de Requisições</div>
+                <div class="stat-label">Total Requests</div>
             </div>
             <div class="stat-card">
                 <div class="stat-number" id="backend1Count">0</div>
@@ -218,159 +195,77 @@
             </div>
         </div>
 
-        <div class="response-box" id="responseBox">
-Clique em "Fazer Requisição" para simular o load balancing do Nginx!
-
-📌 Algoritmos disponíveis:
-• Round Robin: Distribui requisições de forma circular
-• Least Connections: Envia para o servidor com menos conexões ativas
-• Random: Distribui aleatoriamente
-• IP Hash: Sempre envia o mesmo IP para o mesmo servidor
-        </div>
+        <div class="response-box" id="responseBox">// O log da resposta do servidor aparecerá aqui...
+ Aguardando interação.</div>
     </div>
 
     <script>
+        // Estado da aplicação
         let stats = { total: 0, backend1: 0, backend2: 0, backend3: 0 };
-        let currentBackend = 0;
-        let algorithm = 'round-robin';
-        let connections = { backend1: 0, backend2: 0, backend3: 0 };
-        let requestHistory = [];
+        const loading = document.getElementById('loading');
+        const responseBox = document.getElementById('responseBox');
 
-        // Simula latências diferentes dos backends
-        const backendLatency = {
-            'Backend-1': () => 50 + Math.random() * 50,
-            'Backend-2': () => 60 + Math.random() * 60,
-            'Backend-3': () => 40 + Math.random() * 40
-        };
-
-        function changeAlgorithm() {
-            algorithm = document.getElementById('algorithm').value;
-            document.getElementById('responseBox').textContent = 
-                `✅ Algoritmo alterado para: ${algorithm}\n\nFaça novas requisições para ver o novo comportamento!`;
-        }
-
-        function selectBackend() {
-            let selected;
-            
-            switch(algorithm) {
-                case 'round-robin':
-                    currentBackend = (currentBackend % 3) + 1;
-                    selected = `Backend-${currentBackend}`;
-                    break;
-                    
-                case 'least-conn':
-                    const minConn = Math.min(connections.backend1, connections.backend2, connections.backend3);
-                    if (connections.backend1 === minConn) selected = 'Backend-1';
-                    else if (connections.backend2 === minConn) selected = 'Backend-2';
-                    else selected = 'Backend-3';
-                    break;
-                    
-                case 'random':
-                    const rand = Math.floor(Math.random() * 3) + 1;
-                    selected = `Backend-${rand}`;
-                    break;
-                    
-                case 'ip-hash':
-                    // Simula hash baseado em IP (sempre vai pro mesmo)
-                    const hash = '192.168.1.100'.split('.').reduce((a, b) => parseInt(a) + parseInt(b), 0);
-                    selected = `Backend-${(hash % 3) + 1}`;
-                    break;
-                    
-                default:
-                    selected = 'Backend-1';
-            }
-            
-            return selected;
-        }
-
-        async function makeRequest() {
-            const loading = document.getElementById('loading');
-            const responseBox = document.getElementById('responseBox');
-            
-            loading.style.display = 'block';
+        async function makeRequest(isBatch = false) {
+            if(!isBatch) loading.style.display = 'block';
             
             try {
-                const server = selectBackend();
-                const latency = Math.round(backendLatency[server]());
+                // AQUI ACONTECE A MÁGICA:
+                // Chamamos /api/, o Nginx pega essa requisição e escolhe um backend.
+                const res = await fetch('/api/');
                 
-                // Incrementa conexão
-                if (server === 'Backend-1') connections.backend1++;
-                else if (server === 'Backend-2') connections.backend2++;
-                else if (server === 'Backend-3') connections.backend3++;
+                if (!res.ok) throw new Error(`Erro HTTP: ${res.status}`);
                 
-                // Simula latência da requisição
-                await new Promise(resolve => setTimeout(resolve, latency));
+                const data = await res.json();
                 
-                // Simula resposta do backend
-                const data = {
-                    server: server,
-                    timestamp: new Date().toISOString(),
-                    requestNumber: stats.total + 1,
-                    message: 'DevOps com Nginx - Load Balanced!',
-                    uptime: Math.floor(Math.random() * 10000),
-                    latency: `${latency}ms`,
-                    algorithm: algorithm,
-                    activeConnections: server === 'Backend-1' ? connections.backend1 :
-                                      server === 'Backend-2' ? connections.backend2 :
-                                      connections.backend3
-                };
-                
+                // Atualiza contadores baseado em QUEM respondeu
                 stats.total++;
+                
                 if (data.server === 'Backend-1') stats.backend1++;
                 else if (data.server === 'Backend-2') stats.backend2++;
                 else if (data.server === 'Backend-3') stats.backend3++;
-                
-                requestHistory.push(data);
-                if (requestHistory.length > 5) requestHistory.shift();
-                
+                else {
+                    // Caso responda algo inesperado ou erro
+                    console.warn("Servidor desconhecido:", data.server);
+                }
+
                 updateStats();
-                
-                // Decrementa conexão após um tempo
-                setTimeout(() => {
-                    if (server === 'Backend-1') connections.backend1 = Math.max(0, connections.backend1 - 1);
-                    else if (server === 'Backend-2') connections.backend2 = Math.max(0, connections.backend2 - 1);
-                    else if (server === 'Backend-3') connections.backend3 = Math.max(0, connections.backend3 - 1);
-                }, 1000);
-                
-                // Mostra últimas 5 requisições
-                let output = '📊 Últimas Requisições:\n\n';
-                requestHistory.reverse().forEach((req, idx) => {
-                    output += `${requestHistory.length - idx}. ${req.server} - ${req.latency}\n`;
-                    output += `   Timestamp: ${new Date(req.timestamp).toLocaleTimeString()}\n`;
-                    output += `   Conexões Ativas: ${req.activeConnections}\n\n`;
-                });
-                requestHistory.reverse();
-                
-                output += '\n💡 Última Resposta Completa:\n\n';
-                output += JSON.stringify(data, null, 2);
-                
-                responseBox.textContent = output;
-                
+
+                // Mostra o JSON bonitinho na tela
+                if(!isBatch) {
+                    responseBox.textContent = `✅ Resposta Recebida:\n` + 
+                                              JSON.stringify(data, null, 2);
+                }
+
             } catch (error) {
-                responseBox.textContent = 'Erro: ' + error.message;
+                console.error(error);
+                responseBox.textContent = `❌ Erro de Conexão:\n\n` +
+                                          `O Nginx ou os Backends parecem estar offline.\n` +
+                                          `Verifique se rodou 'docker-compose up'.\n\n` +
+                                          `Detalhe: ${error.message}`;
             } finally {
-                loading.style.display = 'none';
+                if(!isBatch) loading.style.display = 'none';
             }
         }
 
         async function makeMultipleRequests(count) {
-            const loading = document.getElementById('loading');
             loading.style.display = 'block';
+            responseBox.textContent = `🚀 Disparando ${count} requisições em paralelo...`;
             
+            // Cria um array de promessas para disparar tudo "quase" junto
+            // Isso força o Nginx a trabalhar mais duro no balanceamento
+            const promises = [];
             for (let i = 0; i < count; i++) {
-                await makeRequest();
-                await new Promise(resolve => setTimeout(resolve, 100));
+                promises.push(makeRequest(true));
+                // Pequeno delay para não travar o navegador visualmente
+                await new Promise(r => setTimeout(r, 50)); 
             }
             
-            loading.style.display = 'none';
+            await Promise.all(promises);
             
-            document.getElementById('responseBox').textContent = 
-                `✅ ${count} requisições completadas!\n\n` +
-                `📊 Distribuição:\n` +
-                `Backend 1: ${stats.backend1} requisições (${((stats.backend1/stats.total)*100).toFixed(1)}%)\n` +
-                `Backend 2: ${stats.backend2} requisições (${((stats.backend2/stats.total)*100).toFixed(1)}%)\n` +
-                `Backend 3: ${stats.backend3} requisições (${((stats.backend3/stats.total)*100).toFixed(1)}%)\n\n` +
-                `Algoritmo utilizado: ${algorithm}`;
+            loading.style.display = 'none';
+            responseBox.textContent = `🏁 Ciclo finalizado!\n\n` +
+                                      `Observe a distribuição da carga nos contadores acima.\n` +
+                                      `O Nginx tentou equilibrar baseado em 'least_conn'.`;
         }
 
         function updateStats() {
@@ -380,15 +275,10 @@ Clique em "Fazer Requisição" para simular o load balancing do Nginx!
             document.getElementById('backend3Count').textContent = stats.backend3;
         }
 
-        function clearResponse() {
-            document.getElementById('responseBox').textContent = 
-                '🗑️ Estatísticas limpas! Pronto para novos testes.\n\n' +
-                'Faça novas requisições para testar o load balancing!';
+        function clearStats() {
             stats = { total: 0, backend1: 0, backend2: 0, backend3: 0 };
-            connections = { backend1: 0, backend2: 0, backend3: 0 };
-            requestHistory = [];
-            currentBackend = 0;
             updateStats();
+            responseBox.textContent = "// Stats resetados. Pronto para novo teste.";
         }
     </script>
 </body>
