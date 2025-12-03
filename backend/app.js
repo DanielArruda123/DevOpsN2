@@ -11,7 +11,7 @@ app.get('/', (req, res) => {
         server: SERVER_ID,
         timestamp: new Date().toISOString(),
         requestNumber: requestCount,
-        message: 'DevOps com Nginx - Load Balanced!',
+        message: 'ci-cd funcionando!',
         uptime: process.uptime()
     });
 });
