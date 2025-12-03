@@ -11,7 +11,7 @@ app.get('/', (req, res) => {
         server: SERVER_ID,
         timestamp: new Date().toISOString(),
         requestNumber: requestCount,
-        message: 'ci-cd funcionando!',
+        message: 'ci-cd funcionando aqui!',
         uptime: process.uptime()
     });
 });
